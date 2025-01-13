@@ -1,4 +1,4 @@
-import Curves "../../../motoko-bitcoin/src/ec/Curves";
+import Curves "mo:bitcoin/ec/Curves";
 
 module Types {
     public type SendRequest = {
@@ -36,20 +36,72 @@ module Types {
         key_id : EcdsaKeyId;
     };
 
+    public type SchnorrKeyId = {
+        algorithm : SchnorrAlgorithm;
+        name : Text;
+    };
+
+    public type SchnorrAlgorithm = {
+        #bip340secp256k1;
+    };
+
+    public type SchnorrPublicKeyArgs = {
+        canister_id : ?Principal;
+        derivation_path : [Blob];
+        key_id : SchnorrKeyId;
+    };
+
+    public type SchnorrPublicKeyReply = {
+        public_key : Blob;
+        chain_code : Blob;
+    };
+
+    public type SignWithSchnorrArgs = {
+        message : Blob;
+        derivation_path : [Blob];
+        key_id : SchnorrKeyId;
+    };
+
+    public type SignWithSchnorrReply = {
+        signature : Blob;
+    };
+
     public type Satoshi = Nat64;
-    public type MillisatoshiPerByte = Nat64;
+    public type MillisatoshiPerVByte = Nat64;
     public type Cycles = Nat;
     public type BitcoinAddress = Text;
     public type BlockHash = [Nat8];
     public type Page = [Nat8];
 
     public let CURVE = Curves.secp256k1;
-    
+
     /// The type of Bitcoin network the dapp will be interacting with.
     public type Network = {
+        #mainnet;
+        #testnet;
+        #regtest;
+    };
+
+    /// The type of Bitcoin network as defined by the Bitcoin Motoko library
+    /// (Note the difference in casing compared to `Network`)
+    public type NetworkCamelCase = {
         #Mainnet;
         #Testnet;
         #Regtest;
+    };
+
+    public func network_to_network_camel_case(network : Network) : NetworkCamelCase {
+        switch (network) {
+            case (#regtest) {
+                #Regtest;
+            };
+            case (#testnet) {
+                #Testnet;
+            };
+            case (#mainnet) {
+                #Mainnet;
+            };
+        };
     };
 
     /// A reference to a transaction output.
@@ -102,4 +154,6 @@ module Types {
         transaction : [Nat8];
         network : Network;
     };
-}
+
+    public type SignFunction = (Text, [Blob], Blob) -> async Blob;
+};

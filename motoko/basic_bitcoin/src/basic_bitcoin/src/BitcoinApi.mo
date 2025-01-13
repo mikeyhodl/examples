@@ -8,7 +8,7 @@ module {
   type Network = Types.Network;
   type BitcoinAddress = Types.BitcoinAddress;
   type GetUtxosResponse = Types.GetUtxosResponse;
-  type MillisatoshiPerByte = Types.MillisatoshiPerByte;
+  type MillisatoshiPerVByte = Types.MillisatoshiPerVByte;
   type GetBalanceRequest = Types.GetBalanceRequest;
   type GetUtxosRequest = Types.GetUtxosRequest;
   type GetCurrentFeePercentilesRequest = Types.GetCurrentFeePercentilesRequest;
@@ -16,7 +16,7 @@ module {
 
   // The fees for the various Bitcoin endpoints.
   let GET_BALANCE_COST_CYCLES : Cycles = 100_000_000;
-  let GET_UTXOS_COST_CYCLES : Cycles = 100_000_000;
+  let GET_UTXOS_COST_CYCLES : Cycles = 10_000_000_000;
   let GET_CURRENT_FEE_PERCENTILES_COST_CYCLES : Cycles = 100_000_000;
   let SEND_TRANSACTION_BASE_COST_CYCLES : Cycles = 5_000_000_000;
   let SEND_TRANSACTION_COST_CYCLES_PER_BYTE : Cycles = 20_000_000;
@@ -25,7 +25,7 @@ module {
   type ManagementCanisterActor = actor {
       bitcoin_get_balance : GetBalanceRequest -> async Satoshi;
       bitcoin_get_utxos : GetUtxosRequest -> async GetUtxosResponse;
-      bitcoin_get_current_fee_percentiles : GetCurrentFeePercentilesRequest -> async [MillisatoshiPerByte];
+      bitcoin_get_current_fee_percentiles : GetCurrentFeePercentilesRequest -> async [MillisatoshiPerVByte];
       bitcoin_send_transaction : SendTransactionRequest -> async ();
   };
 
@@ -36,7 +36,7 @@ module {
   /// Relies on the `bitcoin_get_balance` endpoint.
   /// See https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-bitcoin_get_balance
   public func get_balance(network : Network, address : BitcoinAddress) : async Satoshi {
-    ExperimentalCycles.add(GET_BALANCE_COST_CYCLES);
+    ExperimentalCycles.add<system>(GET_BALANCE_COST_CYCLES);
     await management_canister_actor.bitcoin_get_balance({
         address;
         network;
@@ -46,12 +46,10 @@ module {
 
   /// Returns the UTXOs of the given Bitcoin address.
   ///
-  /// NOTE: Pagination is ignored in this example. If an address has many thousands
-  /// of UTXOs, then subsequent calls to `bitcoin_get_utxos` are required.
-  ///
+  /// NOTE: Relies on the `bitcoin_get_utxos` endpoint.
   /// See https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-bitcoin_get_utxos
   public func get_utxos(network : Network, address : BitcoinAddress) : async GetUtxosResponse {
-    ExperimentalCycles.add(GET_UTXOS_COST_CYCLES);
+    ExperimentalCycles.add<system>(GET_UTXOS_COST_CYCLES);
     await management_canister_actor.bitcoin_get_utxos({
         address;
         network;
@@ -59,13 +57,13 @@ module {
     })
   };
 
-  /// Returns the 100 fee percentiles measured in millisatoshi/byte.
+  /// Returns the 100 fee percentiles measured in millisatoshi/vbyte.
   /// Percentiles are computed from the last 10,000 transactions (if available).
   ///
   /// Relies on the `bitcoin_get_current_fee_percentiles` endpoint.
   /// See https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-bitcoin_get_current_fee_percentiles
-  public func get_current_fee_percentiles(network : Network) : async [MillisatoshiPerByte] {
-    ExperimentalCycles.add(GET_CURRENT_FEE_PERCENTILES_COST_CYCLES);
+  public func get_current_fee_percentiles(network : Network) : async [MillisatoshiPerVByte] {
+    ExperimentalCycles.add<system>(GET_CURRENT_FEE_PERCENTILES_COST_CYCLES);
     await management_canister_actor.bitcoin_get_current_fee_percentiles({
         network;
     })
@@ -79,7 +77,7 @@ module {
     let transaction_fee =
         SEND_TRANSACTION_BASE_COST_CYCLES + transaction.size() * SEND_TRANSACTION_COST_CYCLES_PER_BYTE;
 
-    ExperimentalCycles.add(transaction_fee);
+    ExperimentalCycles.add<system>(transaction_fee);
     await management_canister_actor.bitcoin_send_transaction({
         network;
         transaction;

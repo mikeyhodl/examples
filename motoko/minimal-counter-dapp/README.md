@@ -1,55 +1,73 @@
-# Minimalistic Dapp
-The example dapp shows how to build a very basic dapp with both backend and frontend, using Motoko for the backend functionality and plain HTML and JavaScript for the frontend. The dapp is a simple counter, which will increment a counter by clicking a button in the frontend.
+# Minimal counter dapp
 
 ![Counter Frontend](README_images/frontend.png)
 
-## Introduction
-The purpose of this example dapp is to build a minimalistic dapp, based on the default dapp template, installed by DFX when creating a new project. The dapp is a simple website with a counter. Every time a button is pressed, a counter is incremented.
+The example dapp shows how to build a very basic dapp with both backend and frontend, using Motoko for the backend functionality and plain HTML and JavaScript for the frontend. The dapp is a simple counter, which will increment, decrement or reset a counter by clicking a button in the frontend.
+
+The purpose of this example dapp is to build a minimalistic dapp, based on the default dapp template, installed by `dfx` when creating a new project.
 
 This example covers:
 
-- Create new canister smart contract using the SDK (DFX)
-- Use the default project as a template as the starting point for the new project
-- Add backend functions for a counter (count, get count and reset count)
-- Implement backend functions in the frontend
-- Deploy the canister smart contract locally
-- Test backend with Candid UI and command line using DFX, and test frontend in browser
+- Create a new canister smart contract using the IC SDK (`dfx`).
+- Use the default project as a template as the starting point for the new project.
+- Add backend functions for a counter (increment, getCount, decrement and reset).
+- Implement backend functions in the frontend.
+- Deploy the canister smart contract locally.
+- Test backend with Candid UI and command line using `dfx`, and test frontend in browser.
 
-## Installation
-This example project can be cloned, installed and deployed locally, for learning and testing purposes. The instructions are based on running the example on either macOS or Linux, but when using WSL2 on Windows, the instructions will be the same.
+## Prerequisites
+This example requires an installation of:
 
-### Prerequisites
-The example project requires the following installed:
+- [x] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx).
+- [x] Clone the example dapp project: `git clone https://github.com/dfinity/examples`
 
-- git
-- Node.js
-- dfx
+Begin by opening a terminal window.
 
-Git and Node can be installed from various package managers. DFX can be installed following the instructions [here](https://smartcontracts.org/docs/quickstart/local-quickstart.html#download-and-install).
+## Step 1: Setup the project environment
 
-### Install
-Install the example dapp project:
+Navigate into the folder containing the project's files and start a local instance of the Internet Computer with the commands:
 
 ```bash
-$ git clone https://github.com/dfinity/examples
-$ cd motoko/minimal-counter-dapp
-$ npm install
+cd examples/motoko/minimal-counter-dapp
+dfx start --background
 ```
 
-The project folder will then look like this:
+## Step 2: Build and deploy the canister
 
-![Project Files](README_images/project_files.png)
+```bash
+dfx deploy
+```
 
+The output will resemble the following:
 
-## Documentation
-The three main parts of the example dapp are the backend, the Candid interface and the frontend. This example project is based on the default project, which is created when running the `dfx new project_name` command, but most of the default project code is replaced to create the counter functionality in this project.
+```bash
+Deployed canisters.
+URLs:
+  Frontend canister via browser
+    minimal_dapp_frontend:
+      - http://127.0.0.1:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai
+      - http://bd3sg-teaaa-aaaaa-qaaba-cai.localhost:4943/
+  Backend canister via Candid interface:
+    minimal_dapp_backend: http://127.0.0.1:4943/?canisterId=be2us-64aaa-aaaaa-qaabq-cai&id=bkyz2-fmaaa-aaaaa-qaaaq-cai
+```
+
+## Step 3: Open the `minimal_dapp_frontend` URL in a web browser
+
+You will see a GUI interface with following buttons:
+
+- **Increment** - On click, the counter value will increase by 1.
+- **Decrement** - On click, the counter value will decrease by 1.
+- **Reload** - On click, the counter value will be reloaded. This is useful in case the value has been changed via Candid interface.
+- **Reset** - On click, the counter value will be reset to 0.
+
+## Architecture
+The three main parts of the example dapp are the backend, the Candid interface, and the frontend. This example project is based on the default project, which is created when running the `dfx new project_name` command, but most of the default project code is replaced to create the counter functionality in this project.
 
 ### Motoko backend
-The backend functions are located in the `src/minimal_dapp/main.mo` Motoko file. The backend stores the counter value, and has functions to get, increment and reset the counter value.
-
+The backend functions are located in the `src/minimal_dapp_backend/main.mo` Motoko file. The backend stores the counter value and has functions to get, increment, decrement and reset the counter value.
 
 #### Counter variable
-Three functions are created to make the counter work: `count()`, `getCount()` and `reset()`. The current counter value is stored as a number in the actor.
+Four functions are created to make the counter work: `increment()`, `decrement()`, `getCount()` and `reset()`. The current counter value is stored as a number in the actor.
 
 
 ```javascript
@@ -58,17 +76,32 @@ actor {
 }
 ```
 
-#### count()
-The `count()` function increments the counter variable. This function is invoked when the user clicks the button on the frontend, or when the function is called through the Candid interface.
+#### increment()
+The `increment()` function increments the counter variable. This function is invoked when the user clicks the `Increment` button on the frontend, or when the function is called through the Candid interface.
 
 ```javascript
-public func count() : async Nat {
+public func increment() : async Nat {
     counter += 1;
     return counter;
 };
 ```
 
 The function returns the incremented counter variable.
+
+#### decrement()
+The `decrement()` function decrements the counter variable. This function is invoked when the user clicks the `Decrement` button on the frontend, or when the function is called through the Candid UI.
+
+```javascript
+public func decrement() : async Nat {
+    // avoid trap due to Natural subtraction underflow
+    if(counter != 0) {
+        counter -= 1;
+    };
+    return counter;
+};
+```
+
+The function returns the decremented counter variable.
 
 #### getCount()
 The `getCount()` function returns the current counter value.
@@ -90,99 +123,111 @@ public func reset() : async Nat {
 ```
 
 ### Candid interface
-The Candid interface is automatically created, and it has a convenient UI, which provides an easy, user-friendly way to test the backend. Learn how to access the Candid UI in the **Testing** section below. 
+The Candid interface is automatically created, and it has a convenient UI, which provides an easy, user-friendly way to test the backend. Learn how to access the Candid UI in the **Testing** section below.
 
 ### Frontend
-The default project installed with `dfx new project_name` has an `index.html` file with page HTML and an `index.js` file with an implementation of the backend functions. These two files are modified in this example project to support the counter functionality, and the backend functions.
+The default project installed with `dfx new project_name` implements the logic that serves the frontend in the `src/minimal_dapp_frontend/src/App.js` file, and most of the HTML is carried over from the default project.
 
-#### HTML
-All HTML code is in the `src/minimal_dapp_assets/src/index.html` file, and most of the HTML is carried over from the default project. The button is kept and so is the section showing the result, just simplified.
+The required JavaScript code to interact with the backend canister is automatically generated by `dfx` and can be found in the `src/declarations/minimal_dapp_backend` folder. The code creates an actor that enables the frontend to call the public functions of the backend canister.
 
-```html
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <title>Minimal Dapp</title>
-        <base href="/">
+```js
+import { html, render } from 'lit-html';
+import { minimal_dapp_backend } from 'declarations/minimal_dapp_backend';
+import logo from './logo2.svg';
 
-        <link type="text/css" rel="stylesheet" href="main.css" />
-    </head>
-    <body>
-        <img src="logo.png" alt="DFINITY logo" />
-        <section>
-            <button id="clickMeBtn">Click Me!</button>
-        </section>
-        <section id="counter"></section>
-    </body>
-</html>
+class App {
+  counter = '';
+
+  constructor() {
+    this.#init();
+  }
+
+  #init = async () => {
+    this.counter = await minimal_dapp_backend.getCount();
+    this.#render();
+  }
+
+  #increment = async (e) => {
+    e.preventDefault();
+    this.counter = await minimal_dapp_backend.increment();
+    this.#render();
+  };
+
+  #decrement = async (e) => {
+    e.preventDefault();
+    this.counter = await minimal_dapp_backend.decrement();
+    this.#render();
+  };
+
+  #reload = async (e) => {
+    e.preventDefault();
+    this.#init();
+  }
+
+  #reset = async (e) => {
+    e.preventDefault();
+    this.counter = await minimal_dapp_backend.reset();
+    this.#render();
+  }
+
+  #render() {
+    let body = html`
+      <main>
+        <img src="${logo}" alt="DFINITY logo" />
+        <br />
+        <br />
+        <form action="#">
+          <button id="increment-btn">Increment</button>
+          <button id="decrement-btn">Decrement</button>
+          <button id="reload-btn">Reload</button>
+          <button id="reset-btn">Reset</button>
+        </form>
+        <section id="counter">Counter: ${this.counter}</section>
+      </main>
+    `;
+    render(body, document.getElementById('root'));
+    document.getElementById('increment-btn').addEventListener('click', this.#increment);
+    document.getElementById('decrement-btn').addEventListener('click', this.#decrement);
+    document.getElementById('reload-btn').addEventListener('click', this.#reload);
+    document.getElementById('reset-btn').addEventListener('click', this.#reset);
+    if (!this.counter) {
+      document.getElementById('decrement-btn').disabled = true;
+    } else {
+      document.getElementById('decrement-btn').disabled = false;
+    }
+  }
+}
+
+export default App;
 ```
 
-#### Javascript
-Two eventlisteners are added to the JavaScript file, `src/minimal_dapp_assets/src/index.js`, the existing JavaScript file from the default project. One eventlistener is for detecting button clicks, and it's calling the `count()` function in the backend, and an eventlistener for page load is added to get the initial value of the counter with `getCount()`. The backend functions are imported through the Candid interface.
+#### `dfx`
+`dfx` has a subset of commands for canister operations, and one of them enables calling the public functions added to the `main.mo` file in the previous step. In the following examples the initial value is 0. `increment` will increment value, `getCount` will return the current value, `decrement` will decrement the value and `reset` will set the value to 0.
 
-```javascript
-import { minimal_dapp } from "../../declarations/minimal_dapp";
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const counter = await minimal_dapp.getCount();
-  document.getElementById("counter").innerText = "Counter: " + counter;
-});
-
-document.getElementById("clickMeBtn").addEventListener("click", async () => {
-  const counter = await minimal_dapp.count();
-  document.getElementById("counter").innerText = "Counter: " + counter;
-});
-```
-
-
-## Deployment
-The local network is started by running this command:
+Command usage: `dfx canister call <project> <function>`
 
 ```bash
-$ dfx start --background
-```
-
-When the local network is up and running, run this command to deploy the canisters:
-
-```bash
-$ dfx deploy
-```
-
-
-## Testing
-The functionality in this example dapp can be tested both in the frontend and in the backend. Before the example dapp can be tested, it must be deployed (locally) as described in the above Deployment section.
-
-### Test the Frontend
-The URL for the frontend depends on the canister ID, which can be retrieved from the `dfx canister id <canister_name>` command.
-
-```bash
-$ dfx canister id minimal_dapp_assets
-ryjl3-tyaaa-aaaaa-aaaba-cai
-```
-**https://<ui_canister_id>.localhost:8000**
-
-### Test the backend
-There are two ways of testing the backend. One way is by making command line requests using DFX, and the other way is to use the Candid UI.
-
-#### dfx
-DFX has a subset of commands for canister operations, and one of them enables calling the public functions added to the `main.mo` file in the previous step. In the following examples the initial value is 0. `count` will increment value and return 1, `getCount` will return the current value and `reset` will set the value to 0.
-
-Command usage: `dfx canister call <project>  <function>`
-
-```bash
-$ dfx canister call minimal_dapp count
+$ dfx canister call minimal_dapp_backend increment
 (1 : Nat)
 ```
 
 ```bash
-$ dfx canister call minimal_dapp getCount
+$ dfx canister call minimal_dapp_backend increment
+(2 : Nat)
+```
+
+```bash
+$ dfx canister call minimal_dapp_backend getCount
+(2 : Nat)
+```
+
+```bash
+$ dfx canister call minimal_dapp_backend decrement
 (1 : Nat)
 ```
 
 ```bash
-$ dfx canister call minimal_dapp reset
+$ dfx canister call minimal_dapp_backend reset
 (0 : Nat)
 ```
 
@@ -191,14 +236,18 @@ The Candid interface is automatically created, and it has a convenient UI, which
 
 ```bash
 $ dfx canister id __Candid_UI
-r7inp-6aaaa-aaaaa-aaabq-cai
-$ dfx canister id minimal_dapp
-rrkah-fqaaa-aaaaa-aaaaq-cai
+be2us-64aaa-aaaaa-qaabq-cai
+$ dfx canister id minimal_dapp_backend
+bkyz2-fmaaa-aaaaa-qaaaq-cai
 ```
 
-**http://<candid_canister_id>.localhost:8000/?id=<backend_canister_id>**
+**http://\{candid_canister_id\}.localhost:4943/?id=\<backend_canister_id\>**
 
 ![Candid UI](README_images/candid_ui.png)
 
 ## License
 This project is licensed under the Apache 2.0 license, see LICENSE.md for details. See CONTRIBUTE.md for details about how to contribute to this project.
+
+## Security considerations and best practices
+
+If you base your application on this example, we recommend you familiarize yourself with and adhere to the [security best practices](https://internetcomputer.org/docs/current/developer-docs/security/security-best-practices/overview) for developing on the Internet Computer. This example may not implement all the best practices.
