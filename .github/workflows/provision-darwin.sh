@@ -11,19 +11,34 @@ bash install-brew.sh
 rm install-brew.sh
 
 # Install Node.
-version=14.15.4
+version=${NODE_VERSION:=14.21.3}
 curl --location --output node.pkg "https://nodejs.org/dist/v$version/node-v$version.pkg"
 sudo installer -pkg node.pkg -store -target /
 rm node.pkg
 
 # Install DFINITY SDK.
-curl --location --output install-dfx.sh "https://internetcomputer.org/install.sh"
-DFX_VERSION=${DFX_VERSION:=0.11.1} bash install-dfx.sh < <(yes Y)
+curl --location --output install-dfx.sh "https://raw.githubusercontent.com/dfinity/sdk/master/public/install-dfxvm.sh"
+DFX_VERSION=${DFX_VERSION:=0.24.3} DFXVM_INIT_YES=true bash install-dfx.sh
 rm install-dfx.sh
+echo "$HOME/Library/Application Support/org.dfinity.dfx/bin" >> $GITHUB_PATH
+source "$HOME/Library/Application Support/org.dfinity.dfx/env"
 dfx cache install
 
+# check the current ic-commit found in the main branch, check if it differs from the one in this PR branch
+# if so, update the  dfx cache with the latest ic artifacts
+if [ -f "${GITHUB_WORKSPACE}/.ic-commit" ]; then
+    stable_sha=$(curl https://raw.githubusercontent.com/dfinity/examples/master/.ic-commit)
+    current_sha=$(sed <"$GITHUB_WORKSPACE/.ic-commit" 's/#.*$//' | sed '/^$/d')
+    arch="x86_64-darwin"
+    if [ "$current_sha" != "$stable_sha" ]; then
+      export current_sha
+      export arch
+      sh "$GITHUB_WORKSPACE/.github/workflows/update-dfx-cache.sh"
+    fi
+fi
+
 # Install ic-repl
-version=0.1.2
+version=0.7.0
 curl --location --output ic-repl "https://github.com/chenyan2002/ic-repl/releases/download/$version/ic-repl-macos"
 mv ./ic-repl /usr/local/bin/ic-repl
 chmod a+x /usr/local/bin/ic-repl
@@ -50,6 +65,16 @@ mkdir -p "${HOME}/bin"
 tar -xf "wasmtime-v${wasmtime_version}-x86_64-macos.tar.xz" --directory "${HOME}/bin/"
 mv "${HOME}/bin/wasmtime-v${wasmtime_version}-x86_64-macos/wasmtime" "${HOME}/bin/wasmtime"
 rm "wasmtime-v${wasmtime_version}-x86_64-macos.tar.xz"
+
+# Install wasi2ic
+git clone https://github.com/wasm-forge/wasi2ic
+cargo install --path wasi2ic --root "${HOME}"
+
+# Install wasm-opt
+version=117
+curl -fsSLO "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_${version}-x86_64-macos.tar.gz" 
+tar -xzf "binaryen-version_${version}-x86_64-macos.tar.gz" --directory "${HOME}/" --strip-components 1
+rm "binaryen-version_${version}-x86_64-macos.tar.gz"
 
 # Exit temporary directory.
 popd

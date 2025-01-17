@@ -1,80 +1,61 @@
-# Design Pattern: Pub/Sub
-
-![Compatibility](https://img.shields.io/badge/compatibility-0.6.25-blue)
-[![Build Status](https://github.com/dfinity/examples/workflows/motoko-pub-sub-example/badge.svg)](https://github.com/dfinity/examples/actions?query=workflow%3Amotoko-pub-sub-example)
+# PubSub
 
 This sample project demonstrates how functions may be passed as arguments of inter-canister calls to be used as callbacks.
 
-## Overview
-
-A common problem in both distributed and decentralized systems is keeping separate services (or canisters) synchronized with one another. While there are many potential solutions to this problem, a popular one is the Publisher/Subscriber pattern or "PubSub". PubSub is an especially valuable pattern on the Internet Computer as its primary drawback, message delivery failures, does not apply.
-
-## Implementation
-
-The first canister (Publisher) exposes a `subscribe` method that other canisters can call to register a callback to be executed whenever its other method `publish` is called with an event matching the subscribed topic.
-
-The second canister (Subscriber) updates its internal count when its `updateCount` method is called.
-
-Note: There are many obvious improvements (keying subscribers by topic in Publisher, validating the topic in the callback) and callbacks can do much more complex things than update counters but hopefully this example illustrates the concepts in a simple way.
+A common problem in both distributed and decentralized systems is keeping separate services (or canisters) synchronized with one another. While there are many potential solutions to this problem, a popular one is the publisher/subscriber pattern or "PubSub". PubSub is an especially valuable pattern on the Internet Computer as its primary drawback, message delivery failures, does not apply.
 
 ## Prerequisites
+This example requires an installation of:
 
-Verify the following before running this demo:
+- [x] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx).
+- [x] Clone the example dapp project: `git clone https://github.com/dfinity/examples`
 
-*  You have downloaded and installed the [DFINITY Canister
-   SDK](https://sdk.dfinity.org).
+Begin by opening a terminal window.
 
-*  You have stopped any Internet Computer or other network process that would
-   create a port conflict on 8000.
+## Step 1: Setup the project environment
 
-## Demo
+Navigate into the folder containing the project's files and start a local instance of the Internet Computer with the commands:
 
-1. Start a local internet computer.
+```bash
+cd examples/motoko/pub-sub
+dfx start --background
+```
 
-   ```text
-   dfx start
-   ```
+## Step 2: Deploy the canisters:
 
-1. Open a new terminal window.
+```bash
+dfx deploy
+```
 
-1. Reserve an identifier for your canister.
+## Step 3: Subscribe to the "Apples" topic
 
-   ```text
-   dfx canister create --all
-   ```
+```bash
+dfx canister call sub init '("Apples")'
+```
 
-1. Build your canister.
+## Step 4: Publish to the "Apples" topic
 
-   ```text
-   dfx build
-   ```
+```bash
+dfx canister call pub publish '(record { "topic" = "Apples"; "value" = 2 })'
+```
 
-1. Deploy your canister.
+## Step 5: Receive your subscription
 
-   ```text
-   dfx canister install --all
-   ```
+```bash
+dfx canister call sub getCount
+```
 
-1. Subscribe to the `"Apples"` topic.
+The output should resemble the following:
 
-   ```text
-   dfx canister call sub init '("Apples")'
-   ```
+```bash
+(2 : nat)
+```
 
-1. Publish to the `"Apples"` topic.
+## Security considerations and best practices
 
-   ```text
-   dfx canister call pub publish '(record { "topic" = "Apples"; "value" = 2 })'
-   ```
+If you base your application on this example, we recommend you familiarize yourself with and adhere to the [security best practices](https://internetcomputer.org/docs/current/references/security/) for developing on the Internet Computer. This example may not implement all the best practices.
 
-1. Receive your subscription.
-
-   ```text
-   dfx canister call sub getCount
-   ```
-
-1. Observe the following result.
-
-   ```
-   (2 : nat64)
-   ```
+For example, the following aspects are particularly relevant for this app, since it makes inter-canister calls:
+* [Be aware that state may change during inter-canister calls.](https://internetcomputer.org/docs/current/developer-docs/security/security-best-practices/overview)
+* [Only make inter-canister calls to trustworthy canisters.](https://internetcomputer.org/docs/current/developer-docs/security/security-best-practices/overview)
+* [Don’t panic after await and don’t lock shared resources across await boundaries.](https://internetcomputer.org/docs/current/developer-docs/security/security-best-practices/overview)

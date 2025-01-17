@@ -1,64 +1,45 @@
-## Superheroes
+# CRUD example
 
-![Compatibility](https://img.shields.io/badge/compatibility-0.6.25-blue)
-[![Build Status](https://github.com/dfinity/examples/workflows/motoko-superheroes-example/badge.svg)](https://github.com/dfinity/examples/actions?query=workflow%3Amotoko-superheroes-example)
+This example demonstrates how to build a CRUD application on ICP using Motoko and React.
 
-This example demonstrates how to build a
-[CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete)
-application on the [Internet Computer](https://dfinity.org) using
-[Motoko](https://sdk.dfinity.org/docs/language-guide/motoko.html) and
-[React](https://reactjs.org). 
+This is a Motoko example that does not currently have a Rust variant.
 
 ## Prerequisites
+This example requires an installation of:
 
-Verify the following before running this demo:
+- [x] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx).
+- [x] Clone the example dapp project: `git clone https://github.com/dfinity/examples`
 
-*  You have downloaded and installed [Node.js](https://nodejs.org).
+Begin by opening a terminal window.
 
-*  You have downloaded and installed the [DFINITY Canister
-   SDK](https://sdk.dfinity.org).
+## Step 1: Setup the project environment
 
-*  You have stopped any Internet Computer or other network process that would
-   create a port conflict on 8000.
+Navigate into the folder containing the project's files and start a local instance of the Internet Computer with the commands:
 
-## Demo
+```bash
+cd examples/motoko/superheroes
+dfx start --background
+```
 
-1. Start a local internet computer.
+## Step 2: Deploy the canisters
 
-   ```text
-   dfx start
-   ```
+```bash
+dfx deploy
+```
 
-1. Open a new terminal window.
+## Step 3: Take note of the URL at which the canister is accessible
 
-1. Reserve an identifier for your canister.
+```bash
+echo "http://127.0.0.1:4943/?canisterId=$(dfx canister id www)"
+```
 
-   ```text
-   dfx canister create --all
-   ```
+## Step 4: Open the aforementioned URL in your web browser.
 
-1. Build your front-end.
+## Security considerations and best practices
 
-   ```text
-   npm install
-   ```
+If you base your application on this example, we recommend you familiarize yourself with and adhere to the [security best practices](https://internetcomputer.org/docs/current/references/security/) for developing on the Internet Computer. This example may not implement all the best practices.
 
-1. Build your canister.
+For example, the following aspects are particularly relevant for this app:
+* [Use HTTP asset certification and avoid serving your dApp through raw.ic0.app](https://internetcomputer.org/docs/current/developer-docs/security/security-best-practices/overview), since this app serves a frontend.
+* [Certify query responses if they are relevant for security](https://internetcomputer.org/docs/current/references/security/general-security-best-practices#certify-query-responses-if-they-are-relevant-for-security), since this app uses query calls.
 
-   ```text
-   dfx build
-   ```
-
-1. Deploy your canister.
-
-   ```text
-   dfx canister install --all
-   ```
-
-1. Take note of the URL at which the canister is accessible.
-
-   ```text
-   echo "http://localhost:8000/?canisterId=$(dfx canister id www)"
-   ```
-
-1. Open the aforementioned URL in your web browser.

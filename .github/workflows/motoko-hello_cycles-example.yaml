@@ -4,16 +4,25 @@ on:
     branches:
       - master
   pull_request:
+    paths:
+      - motoko/hello_cycles/**
+      - .github/workflows/provision-darwin.sh
+      - .github/workflows/provision-linux.sh
+      - .github/workflows/motoko-hello_cycles-example.yaml
+      - .ic-commit
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   motoko-hello_cycles-darwin:
-    runs-on: macos-10.15
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v1
       - name: Provision Darwin
         run: bash .github/workflows/provision-darwin.sh
       - name: Motoko Hello Cycles Darwin
         run: |
-          dfx start --background
+          dfx start --background --clean
           pushd motoko/hello_cycles
           make test
           popd
@@ -25,7 +34,8 @@ jobs:
         run: bash .github/workflows/provision-linux.sh
       - name: Motoko Hello Cycles Linux
         run: |
-          dfx start --background
+          dfxvm update
+          dfx start --background --clean
           pushd motoko/hello_cycles
           make test
           popd
